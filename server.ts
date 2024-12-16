@@ -5,7 +5,7 @@ import bodyParser from 'body-parser';
 import cors from 'cors';
 import axios from 'axios';
 import dotenv from 'dotenv';
-import { AIService } from '../edgechains/arakoodev/src/ai/src/mistral/AiService';
+import { AIService } from './mistral/AiService';
 
 dotenv.config();
 
