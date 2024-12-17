@@ -13,9 +13,8 @@ const PORT = process.env.PORT ? parseInt(process.env.PORT) : 3001;
 const aiService = new AIService(process.env.OPENROUTER_API_KEY!);
 
 // CORS Setup with Specific Origin
-const allowedOrigins = ['https://frontend-omega-six-16.vercel.app']; // Replace with your actual frontend URL
 app.use(cors({
-  origin: allowedOrigins,
+  origin: 'https://frontend-omega-six-16.vercel.app',
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   credentials: true, // If you're using cookies or other credentials
 }));
