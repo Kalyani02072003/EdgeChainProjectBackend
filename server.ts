@@ -77,9 +77,9 @@ app.post('/nutrition', async (req: Request, res: Response): Promise<any> => {
   }
 });
 
-// Route: Generate Meal Plan
 app.post('/mealplan', async (req: Request, res: Response): Promise<any> => {
   const { input, days = 7, language = 'en' } = req.body;
+  console.log("Meal plan request received:", { input, days, language });
 
   if (!input) {
     return res.status(400).json({ error: 'Input is required to generate a meal plan.' });
@@ -94,6 +94,8 @@ app.post('/mealplan', async (req: Request, res: Response): Promise<any> => {
       mealPlan.push(recipe);
     }
 
+    console.log("Generated meal plan:", mealPlan);
+
     if (language !== 'en') {
       const translatedMealPlan = await translateWithHuggingFace(mealPlan.join('\n'), language);
       return res.json({ mealPlan: translatedMealPlan.split('\n') });
@@ -106,8 +108,8 @@ app.post('/mealplan', async (req: Request, res: Response): Promise<any> => {
   }
 });
 
-// Function: Translate Text using Hugging Face
 const translateWithHuggingFace = async (text: string, targetLanguage: string): Promise<string> => {
+  console.log(`Translating text to ${targetLanguage}: ${text}`);
   try {
     const response = await axios.post(
       'https://openrouter.ai/api/v1/chat/completions',
@@ -117,8 +119,11 @@ const translateWithHuggingFace = async (text: string, targetLanguage: string): P
       },
       {
         headers: { Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}` },
+        timeout: 10000
       }
     );
+
+    // console.log('Translation response:', response.data);
 
     if (response.data && response.data.choices) {
       return response.data.choices[0].message.content;
