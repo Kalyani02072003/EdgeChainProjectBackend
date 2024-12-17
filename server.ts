@@ -14,8 +14,9 @@ const aiService = new AIService(process.env.OPENROUTER_API_KEY!);
 
 // CORS Setup with Specific Origin
 app.use(cors({
-  origin: 'https://frontend-omega-six-16.vercel.app',
+  origin: 'https://frontend-omega-six-16.vercel.app', // Ensure this matches your frontend domain exactly
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  allowedHeaders: ['Content-Type', 'Authorization'], // Allow necessary headers like 'Authorization' if required
   credentials: true, // If you're using cookies or other credentials
 }));
 
