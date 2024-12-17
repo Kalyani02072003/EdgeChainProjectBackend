@@ -4,11 +4,14 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "build": "tsc",
-    "start": "nodemon dist/server.js",
+    "build": "npx tsc",
+    "start": "node dist/server.js",
     "dev": "ts-node src/server.ts"
   },
   "keywords": [],
   "author": "",
-  "license": "ISC"
+  "license": "ISC",
+  "devDependencies": {
+    "typescript": "^5.7.2"
+  }
 }
