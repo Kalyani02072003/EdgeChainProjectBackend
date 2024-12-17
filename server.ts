@@ -77,9 +77,13 @@ app.post('/nutrition', async (req: Request, res: Response): Promise<any> => {
   }
 });
 
-app.post('/mealplan', async (req: Request, res: Response): Promise<any> => {
+// Example for one route:
+app.post('/mealplan', async (req: Request, res: Response) : Promise<any> =>{
+  res.setHeader('Access-Control-Allow-Origin', 'https://frontend-omega-six-16.vercel.app');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  
   const { input, days = 7, language = 'en' } = req.body;
-  console.log("Meal plan request received:", { input, days, language });
 
   if (!input) {
     return res.status(400).json({ error: 'Input is required to generate a meal plan.' });
@@ -94,8 +98,6 @@ app.post('/mealplan', async (req: Request, res: Response): Promise<any> => {
       mealPlan.push(recipe);
     }
 
-    console.log("Generated meal plan:", mealPlan);
-
     if (language !== 'en') {
       const translatedMealPlan = await translateWithHuggingFace(mealPlan.join('\n'), language);
       return res.json({ mealPlan: translatedMealPlan.split('\n') });
@@ -107,6 +109,7 @@ app.post('/mealplan', async (req: Request, res: Response): Promise<any> => {
     res.status(500).json({ error: 'An error occurred while generating the meal plan.' });
   }
 });
+
 
 const translateWithHuggingFace = async (text: string, targetLanguage: string): Promise<string> => {
   console.log(`Translating text to ${targetLanguage}: ${text}`);
