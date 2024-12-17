@@ -77,12 +77,14 @@ app.post('/nutrition', async (req: Request, res: Response): Promise<any> => {
   }
 });
 
-// Example for one route:
-app.post('/mealplan', async (req: Request, res: Response) : Promise<any> =>{
+// Example for one route
+app.post('/mealplan', async (req: Request, res: Response): Promise<any> => {
+  // Set CORS headers explicitly
   res.setHeader('Access-Control-Allow-Origin', 'https://frontend-omega-six-16.vercel.app');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-  
+  res.setHeader('Access-Control-Allow-Credentials', 'true'); // If using cookies/credentials
+
   const { input, days = 7, language = 'en' } = req.body;
 
   if (!input) {
@@ -109,6 +111,7 @@ app.post('/mealplan', async (req: Request, res: Response) : Promise<any> =>{
     res.status(500).json({ error: 'An error occurred while generating the meal plan.' });
   }
 });
+
 
 
 const translateWithHuggingFace = async (text: string, targetLanguage: string): Promise<string> => {
