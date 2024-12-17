@@ -25,6 +25,7 @@ const aiService = new AiService_1.AIService(process.env.OPENROUTER_API_KEY);
 // Middleware
 app.use((0, cors_1.default)());
 app.use(body_parser_1.default.json());
+// Route: Generate Recipe
 app.post('/generate', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { input, language = 'en' } = req.body;
     if (!input) {
@@ -34,18 +35,18 @@ app.post('/generate', (req, res) => __awaiter(void 0, void 0, void 0, function* 
         let recipe = yield aiService.getGenerativeResponse(`Generate a recipe for: ${input}`);
         // Extract ingredients for additional processing if needed
         const ingredients = aiService.extractIngredients(recipe);
-        // Generate nutritional infographic directly using the recipe string
-        // const nutritionalInfographic = await aiService.generateNutritionalInfographic(recipe);
+        // Translate if necessary
         if (language !== 'en') {
             recipe = yield translateWithHuggingFace(recipe, language);
         }
-        res.json({ recipe });
+        res.json({ recipe, ingredients });
     }
     catch (error) {
         console.error('Error generating recipe:', error);
         res.status(500).json({ error: 'An error occurred while generating the recipe.' });
     }
 }));
+// Route: Get Nutrition
 app.post('/nutrition', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { input } = req.body;
     if (!input) {
@@ -60,19 +61,21 @@ app.post('/nutrition', (req, res) => __awaiter(void 0, void 0, void 0, function*
         res.status(500).json({ error: 'An error occurred while fetching nutritional values.' });
     }
 }));
+// Route: Generate Meal Plan
 app.post('/mealplan', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { input, days = 7, language = 'en' } = req.body;
     if (!input) {
         return res.status(400).json({ error: 'Input is required to generate a meal plan.' });
     }
     try {
-        let mealPlan = [];
+        const mealPlan = [];
         for (let i = 0; i < days; i++) {
             const recipe = yield aiService.getGenerativeResponse(`Generate a simple meal plan for: ${input} for day ${i + 1}`);
             mealPlan.push(recipe);
         }
         if (language !== 'en') {
-            mealPlan = yield translateWithHuggingFace(mealPlan.join('\n'), language);
+            const translatedMealPlan = yield translateWithHuggingFace(mealPlan.join('\n'), language);
+            return res.json({ mealPlan: translatedMealPlan.split('\n') });
         }
         res.json({ mealPlan });
     }
@@ -81,16 +84,19 @@ app.post('/mealplan', (req, res) => __awaiter(void 0, void 0, void 0, function* 
         res.status(500).json({ error: 'An error occurred while generating the meal plan.' });
     }
 }));
-// Function to handle translation using Hugging Face API
+// Function: Translate Text using Hugging Face
 const translateWithHuggingFace = (text, targetLanguage) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const response = yield axios_1.default.post('https://openrouter.ai/api/v1/chat/completions', {
             model: 'huggingfaceh4/zephyr-7b-beta:free',
             messages: [{ role: 'user', content: `Translate this text to ${targetLanguage}: ${text}` }],
         }, {
-            headers: { 'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}` },
+            headers: { Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}` },
         });
-        return response.data.choices[0].message.content;
+        if (response.data && response.data.choices) {
+            return response.data.choices[0].message.content;
+        }
+        throw new Error('Translation API response is invalid');
     }
     catch (error) {
         console.error('Error translating text:', error);

@@ -1,11 +1,10 @@
-
-
-import express from 'express';
+import express, { Request, Response } from 'express';
 import bodyParser from 'body-parser';
 import cors from 'cors';
 import axios from 'axios';
 import dotenv from 'dotenv';
 import { AIService } from './mistral/AiService';
+
 
 dotenv.config();
 
@@ -17,7 +16,10 @@ const aiService = new AIService(process.env.OPENROUTER_API_KEY!);
 app.use(cors());
 app.use(bodyParser.json());
 
-app.post('/generate', async (req, res) => {
+
+
+// Route: Generate Recipe
+app.post('/generate', async (req: Request, res: Response): Promise<any> => {
   const { input, language = 'en' } = req.body;
 
   if (!input) {
@@ -30,21 +32,20 @@ app.post('/generate', async (req, res) => {
     // Extract ingredients for additional processing if needed
     const ingredients: string[] = aiService.extractIngredients(recipe);
 
-    // Generate nutritional infographic directly using the recipe string
-    // const nutritionalInfographic = await aiService.generateNutritionalInfographic(recipe);
-    
+    // Translate if necessary
     if (language !== 'en') {
       recipe = await translateWithHuggingFace(recipe, language);
     }
 
-    res.json({ recipe });
+    res.json({ recipe, ingredients });
   } catch (error) {
     console.error('Error generating recipe:', error);
     res.status(500).json({ error: 'An error occurred while generating the recipe.' });
   }
 });
 
-app.post('/nutrition', async (req, res) => {
+// Route: Get Nutrition
+app.post('/nutrition', async (req: Request, res: Response): Promise<any> => {
   const { input } = req.body;
 
   if (!input) {
@@ -63,7 +64,8 @@ app.post('/nutrition', async (req, res) => {
   }
 });
 
-app.post('/mealplan', async (req, res) => {
+// Route: Generate Meal Plan
+app.post('/mealplan', async (req: Request, res: Response): Promise<any> => {
   const { input, days = 7, language = 'en' } = req.body;
 
   if (!input) {
@@ -71,14 +73,17 @@ app.post('/mealplan', async (req, res) => {
   }
 
   try {
-    let mealPlan = [];
+    const mealPlan = [];
     for (let i = 0; i < days; i++) {
-      const recipe = await aiService.getGenerativeResponse(`Generate a simple meal plan for: ${input} for day ${i + 1}`);
+      const recipe = await aiService.getGenerativeResponse(
+        `Generate a simple meal plan for: ${input} for day ${i + 1}`
+      );
       mealPlan.push(recipe);
     }
 
     if (language !== 'en') {
-      mealPlan = await translateWithHuggingFace(mealPlan.join('\n'), language);
+      const translatedMealPlan = await translateWithHuggingFace(mealPlan.join('\n'), language);
+      return res.json({ mealPlan: translatedMealPlan.split('\n') });
     }
 
     res.json({ mealPlan });
@@ -88,9 +93,8 @@ app.post('/mealplan', async (req, res) => {
   }
 });
 
-
-// Function to handle translation using Hugging Face API
-const translateWithHuggingFace = async (text: string, targetLanguage: string) => {
+// Function: Translate Text using Hugging Face
+const translateWithHuggingFace = async (text: string, targetLanguage: string): Promise<string> => {
   try {
     const response = await axios.post(
       'https://openrouter.ai/api/v1/chat/completions',
@@ -99,10 +103,15 @@ const translateWithHuggingFace = async (text: string, targetLanguage: string) =>
         messages: [{ role: 'user', content: `Translate this text to ${targetLanguage}: ${text}` }],
       },
       {
-        headers: { 'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}` },
+        headers: { Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}` },
       }
     );
-    return response.data.choices[0].message.content;
+
+    if (response.data && response.data.choices) {
+      return response.data.choices[0].message.content;
+    }
+
+    throw new Error('Translation API response is invalid');
   } catch (error) {
     console.error('Error translating text:', error);
     throw new Error('Translation failed');
