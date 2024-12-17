@@ -9,7 +9,8 @@ import { AIService } from './mistral/AiService';
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT ? parseInt(process.env.PORT) : 3001;
+
 const aiService = new AIService(process.env.OPENROUTER_API_KEY!);
 
 // Middleware
@@ -119,6 +120,6 @@ const translateWithHuggingFace = async (text: string, targetLanguage: string): P
 };
 
 // Start the server
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running on http://localhost:${PORT}`);
 });
