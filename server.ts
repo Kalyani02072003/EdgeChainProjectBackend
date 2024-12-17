@@ -5,7 +5,6 @@ import axios from 'axios';
 import dotenv from 'dotenv';
 import { AIService } from './mistral/AiService';
 
-
 dotenv.config();
 
 const app = express();
@@ -13,11 +12,24 @@ const PORT = process.env.PORT ? parseInt(process.env.PORT) : 3001;
 
 const aiService = new AIService(process.env.OPENROUTER_API_KEY!);
 
+// CORS Setup with Specific Origin
+const allowedOrigins = ['https://frontend-omega-six-16.vercel.app']; // Replace with your actual frontend URL
+app.use(cors({
+  origin: allowedOrigins,
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  credentials: true, // If you're using cookies or other credentials
+}));
+
 // Middleware
-app.use(cors());
 app.use(bodyParser.json());
 
-
+// Handle Preflight OPTIONS Request
+app.options('*', (req: Request, res: Response) => {
+  res.header('Access-Control-Allow-Origin', 'https://frontend-omega-six-16.vercel.app');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.sendStatus(200);
+});
 
 // Route: Generate Recipe
 app.post('/generate', async (req: Request, res: Response): Promise<any> => {
